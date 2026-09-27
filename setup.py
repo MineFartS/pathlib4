@@ -10,5 +10,7 @@ setup(
 
     cpp_ext("pathlib4/_path.cpp", **kw),
 
+    cpp_ext("pathlib4/_loc.cpp", **kw),
+
 )
 
