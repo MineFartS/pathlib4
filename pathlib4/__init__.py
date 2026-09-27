@@ -26,23 +26,18 @@ def relscan(
     """
     from .sharedbuffer import SharedBuffer
     from shutil import copytree
-    from ..process import Thread
+    from threading import Thread
 
     buff = SharedBuffer()
     
-    # Copytree dry run
     t = Thread(
-
-        func = copytree,
-
-        src = str(src),
-        dst = str(dst), 
-
-        dirs_exist_ok = True,
-        
-        # Append paths to list instead of directly copying
-        copy_function = lambda s, d, **_: buff.add(PathPair(s, d))
-
+        target = copytree,
+        kwargs = {
+            'src': str(src),
+            'dst': str(dst), 
+            'dirs_exist_ok': True,
+            'copy_function': lambda s, d, **_: buff.add(PathPair(s, d))
+        }
     )
 
     buff.stop_when = lambda: not t.running
