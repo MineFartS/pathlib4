@@ -1,0 +1,10 @@
+[build-system]
+requires = [ "pybind-setup-ext @ git+https://github.com/MineFartS/pybind-setup-ext" ]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pathlib4"
+version = "v2026.09.27"
+requires-python = ">=3.12"
+dependencies = []
+
