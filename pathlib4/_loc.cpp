@@ -5,31 +5,20 @@
 #include <string>
 
 #include "remap.h"
-#include "hint.hpp"
 
 class _loc { public:
 
-    py::object _Path(const auto path) {
-        py::object mod = import("philh_myftp_biz.pc.Path");
-        py::object cls = mod.attr("Path");
-        return cls(py::str(path));
-    }
-    
-    PathTypeHint get_temp() {
+    str temp() {
+        pyobj gettempdir = import("tempfile").attr("gettempdir");
 
-        py::object gettempdir = import("tempfile").attr("gettempdir");
+        str SRV = "E:/__temp__/";
+        str OS  = gettempdir().cast<str>();
         
-        py::object SERVER = _Path("E:/__temp__/");
-
-        if (SERVER.attr("exists").cast<bool>()) {
-            return PathTypeHint{ SERVER };
-        } else {
-            return PathTypeHint{ _Path(gettempdir()) };
-        }
-
+        std::error_code ec;
+        return fs::exists(SRV, ec) ? SRV : OS;
     }
 
-    PathTypeHint get_script() {
+    fs::path script() {
 
         py::object mod = import("sys").attr("modules")["__main__"];
 
@@ -42,33 +31,22 @@ class _loc { public:
             pure = fs::current_path();
         }
 
-        pyobj wrapped = _Path(pure.string());
-        return PathTypeHint{ wrapped };
+        return pure;
     }
 
-    PathTypeHint get_cache() {
-
-        py::object path = get_script().i.attr("child")(py::str("/__pycache__/"));
-        
-        path.attr("mkdir")();
-
-        return PathTypeHint{ path };
+    fs::path cache() {
+        return this->script() / "/__pycache__/";
     }
 
 };
 
-PYBIND11_MODULE(_pc, m) {
-
-    py::class_<PathTypeHint> _path_hint(m, "Path", py::module_local());
-    _path_hint.attr("__module__") = py::cast(".Path");
+PYBIND11_MODULE(_loc, m) {
 
     py::class_<_loc>(m, "_loc")
         .def(py::init<>())
-        .def_property_readonly("temp", &_loc::get_temp)
-        .def_property_readonly("script", &_loc::get_script)
-        .def_property_readonly("cache", &_loc::get_cache);
-    
-    m.attr("loc") = py::cast(_loc());
+        .def_property_readonly("temp", &_loc::temp)
+        .def_property_readonly("script", &_loc::script)
+        .def_property_readonly("cache", &_loc::cache);
 
 }
 

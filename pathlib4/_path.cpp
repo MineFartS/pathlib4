@@ -7,7 +7,6 @@
 #include <filesystem>
 
 #include "remap.h"
-#include "hint.hpp"
 
 class _Path { public:
 
@@ -101,9 +100,6 @@ class _Path { public:
 };
 
 PYBIND11_MODULE(_path, m) {
-
-    py::class_<PathTypeHint> _path_hint(m, "Path", py::module_local());
-    _path_hint.attr("__module__") = py::cast(".Path");
 
     py::class_<_Path>(m, "_Path")
         .def(py::init<py::object>())
