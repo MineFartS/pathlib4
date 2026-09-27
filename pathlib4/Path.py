@@ -2,10 +2,10 @@ from typing import Literal, Generator, TYPE_CHECKING, Any
 from functools import cached_property
 from dataclasses import dataclass
 from ._path import _Path
-from .. import file
+from . import file
 
 if TYPE_CHECKING:
-    from ..time import from_stamp
+    from timelib2 import from_stamp
 
 #========================================================
 
@@ -28,7 +28,7 @@ class Path(_Path):
 
     @property
     def ctime(self):
-        from ..time import from_stamp
+        from timelib2 import from_stamp
         from os import path
 
         stamp = path.getctime(self.path)
@@ -85,7 +85,7 @@ class Path(_Path):
         
     @property
     def fsize(self) -> str:
-        from ..db import Size
+        from dbwraps import Size
 
         return Size.from_bytes(self.size, ndigits=2)
 
@@ -122,7 +122,7 @@ class Path(_Path):
     
     @cached_property
     def type(self) -> None | str:
-        from ..db import MIMETYPES
+        from dbwraps import MIMETYPES
         return MIMETYPES.get(self.ext)
 
     def clear(self) -> None:
@@ -130,8 +130,7 @@ class Path(_Path):
         self.open('w').close()
 
     def delete(self) -> None:
-        from ..terminal import Log
-        from .. import VERBOSE
+        from logger2 import VERBOSE, Log
 
         if self.is_dir:
             from shutil import rmtree as delete
@@ -149,7 +148,7 @@ class Path(_Path):
             delete(self.path)
 
     def rename(self, dst:Any) -> 'Path':
-        from ..terminal import Log
+        from logger2 import Log
         from os import rename
         
         with self.parent.cd:
@@ -180,7 +179,7 @@ class Path(_Path):
         return self.path.strip('/').split(sep='/')[i]
 
     def copy(self, dst:'Path') -> None:
-        from ..terminal import Log, ProgressBar
+        from logger2 import Log
         from . import relscan
 
         files: list[PathPair] = []
@@ -205,12 +204,12 @@ class Path(_Path):
                     dst = dst
                 )]
 
-            pbar = ProgressBar(
-                total = sum(f.src.size for f in files), 
-                label = "Copying Files",
-                mode  = 'FSTREAM',
-                verbose = True
-            )
+            #pbar = ProgressBar(
+            #    total = sum(f.src.size for f in files), 
+            #    label = "Copying Files",
+            #    mode  = 'FSTREAM',
+            #    verbose = True
+            #)
 
             # Iter through source and destination pairs
             for file in files:
@@ -231,13 +230,13 @@ class Path(_Path):
                 dstIO = file.dst.open('wb')
 
                 for chunk in iter(lambda: srcIO.read(8192), b""):
-                    pbar.step(chunk)
+                    #pbar.step(chunk)
                     dstIO.write(chunk)
 
                 srcIO.close()
                 dstIO.close()
 
-            pbar.stop()
+            #pbar.stop()
 
         except:
             (f.dst.delete() for f in files)
@@ -282,7 +281,7 @@ class Path(_Path):
         key: Any, 
         value: Any
     ) -> None:
-        from ..text import hex
+        from strlib2 import hex
 
         og_mtime = self.mtime.get()
 
@@ -292,7 +291,7 @@ class Path(_Path):
         _mtime(path=self).set(mtime=og_mtime)
 
     def __getitem__(self, key:Any) -> None:
-        from ..text import hex
+        from strlib2 import hex
         try:
             with open(f'{self}:{hex.encode(key)}') as store:
                 return hex.decode(store.read()) # pyright: ignore[reportReturnType]
@@ -341,7 +340,7 @@ class Path(_Path):
     
     def clear_exif(self):
         # TODO Add Video/Audio parsing
-        from ..terminal import Log
+        from logger2 import Log
                     
         Log.VERB(f'Clearing Exif Data: {self.path}')
 
@@ -441,7 +440,7 @@ class _mtime:
     def set(self,
         mtime: 'int|from_stamp' = None
     ) -> None:
-        from ..time import now
+        from logger2 import now
         from os import utime
 
         if mtime is None:
@@ -454,7 +453,7 @@ class _mtime:
 
     @property
     def current(self):
-        from ..time import from_stamp
+        from timelib2 import from_stamp
         from os import path
 
         return from_stamp(
@@ -469,7 +468,7 @@ class _mtime:
 
     @property
     def stopwatch(self):
-        from ..time import Stopwatch
+        from timelib2 import Stopwatch
 
         SW = Stopwatch()
 
@@ -490,7 +489,7 @@ class _set_access:
             yield from self.path.descendants
     
     def readonly(self) -> None:
-        from ..terminal import Log
+        from logger2 import Log
         from os import chmod
 
         if self.path.in_use:
@@ -501,12 +500,16 @@ class _set_access:
                 chmod(str(path), 0o644)
 
     def full(self) -> None:
-        from ..process import RunHidden
-        from ..terminal import Log
+        from subprocess import run, PIPE
+        from logger2 import Log
         from os import chmod
 
         if self.path.is_dir:
-            RunHidden('icacls', self.path, '/grant', 'Everyone:F', '/t', '/c', '/q')
+            run(
+                ['icacls', self.path, '/grant', 'Everyone:F', '/t', '/c', '/q'],
+                stdout = PIPE,
+                stderr = PIPE,
+            )
 
         elif self.path.in_use:
             Log.VERB(f'Failed to Update Access: {self.path}')
