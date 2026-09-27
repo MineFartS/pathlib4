@@ -24,7 +24,7 @@ def relscan(
         'dst': Path('D:/Child1')
     }]
     """
-    from ..functools import SharedBuffer
+    from .sharedbuffer import SharedBuffer
     from shutil import copytree
     from ..process import Thread
 
