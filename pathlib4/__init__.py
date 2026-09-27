@@ -1,4 +1,5 @@
 from typing import Literal, Generator
+from .Path import Path, PathPair
 
 #========================================================
 
