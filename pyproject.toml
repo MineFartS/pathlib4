@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "pybind-setup-ext @ git+https://github.com/MineFartS/pybind-setup-ext" ]
+requires = [ "pybind-setup-ext @ git+https://github.com/MineFartS/pybind-setup-ext",]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,4 +13,3 @@ file = [ "requirements.txt",]
 
 [tool.setuptools.packages.find]
 exclude = [ "wheelhouse*", "headers*",]
-
